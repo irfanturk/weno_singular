@@ -34,7 +34,6 @@ from numpy.typing import NDArray
 from scipy.sparse import csr_matrix, identity
 from scipy.sparse.linalg import spsolve
 
-
 # ----------------------------------------------------------------------
 # Type aliases
 # ----------------------------------------------------------------------

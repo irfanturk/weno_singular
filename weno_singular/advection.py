@@ -43,7 +43,6 @@ from numpy.typing import NDArray
 from weno_singular.time_steppers import ssp_rk3_step
 from weno_singular.weno5 import L_advection
 
-
 # ----------------------------------------------------------------------
 # Helpers for delta-cell indexing and exact reference solutions
 # ----------------------------------------------------------------------
