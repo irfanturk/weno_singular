@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "weno_singular"
+abstract: >-
+  WENO solvers for hyperbolic conservation laws with singular source terms.
+  Modular Python implementations of WENO3 and WENO5 schemes on uniform meshes,
+  with explicit and semi-implicit time integration.
+authors:
+  - family-names: "Türk"
+    given-names: "İrfan"
+version: 0.1.0
+date-released: "2026-04-28"
+license: Apache-2.0
+repository-code: "https://github.com/irfanturk/weno_singular"
+keywords:
+  - WENO
+  - hyperbolic conservation laws
+  - singular source terms
+  - finite volume
+  - Python
+references:
+  - type: thesis
+    authors:
+      - family-names: "Türk"
+        given-names: "İrfan"
+    title: "On the numerical solution of advection diffusion reaction equations with singular source terms"
+    institution:
+      name: "İstanbul University"
+    year: 2016
+    url: "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.jsp?id=RnfPVSw2_JaJGF7XtiaayQ"

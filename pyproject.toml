@@ -1,0 +1,74 @@
+[build-system]
+requires      = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name        = "weno-singular"
+version     = "0.1.0"
+description = "WENO solvers for hyperbolic conservation laws with singular source terms"
+readme      = "README.md"
+requires-python = ">=3.9"
+license     = { file = "LICENSE" }
+keywords    = [
+    "weno", "hyperbolic", "conservation laws", "singular sources",
+    "finite volume", "advection", "burgers",
+]
+authors = [
+    { name = "Irfan Turk" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.20",
+    "scipy>=1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+]
+docs = [
+    "matplotlib>=3.5",
+]
+
+[project.urls]
+Homepage      = "https://github.com/irfanturk/weno_singular"
+Repository    = "https://github.com/irfanturk/weno_singular"
+"Bug Tracker" = "https://github.com/irfanturk/weno_singular/issues"
+
+# ----------------------------------------------------------------------
+# Tool configuration
+# ----------------------------------------------------------------------
+
+[tool.setuptools.packages.find]
+include = ["weno_singular*"]
+
+[tool.pytest.ini_options]
+testpaths   = ["tests"]
+addopts     = "-ra -q --strict-markers"
+pythonpath  = ["."]
+
+[tool.ruff]
+line-length    = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "NPY"]
+ignore = ["E741"]   # allow l, I, O as variable names (common in math)
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*"    = ["E501"]
+"examples/*" = ["E501"]
