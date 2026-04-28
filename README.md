@@ -1,10 +1,10 @@
 # weno_singular
 
-**WENO solvers for hyperbolic conservation laws with singular source terms.**
+**WENO solvers for linear hyperbolic conservation laws with singular source terms.**
 
-A modular, vectorized Python implementation of WENO3 and WENO5 schemes for
-1D scalar conservation laws on uniform meshes, with first-class support
-for problems involving Dirac-delta point sources.
+A specialized Python implementation of WENO3 and WENO5 finite-volume
+schemes for 1D linear scalar advection on uniform meshes, with first-class
+support for problems involving Dirac-delta point sources.
 
 The library was developed as a companion to the convergence and validation
 tables in Türk (2016).
@@ -19,8 +19,6 @@ tables in Türk (2016).
   - RK3 predictor + Crank–Nicolson corrector for semi-implicit time stepping
 - **Singular source terms** (Dirac-delta in space, smooth or stationary in time)
   treated through a consistent direct-injection discretization
-- **Inviscid Burgers** equation with two-sided WENO reconstruction and
-  Lax–Friedrichs flux
 - Validated against analytical solutions (5th-order convergence on smooth
   problems, 1st-order convergence at discontinuities — matching theory)
 
@@ -60,8 +58,8 @@ print(f"L1 error    : {result['L1_err']:.4e}")
 See [`examples/`](examples/) for more, including:
 
 - `01_smooth_advection.py` — convergence study reproducing 5th order
-- `02_singular_source.py` — Example 6.1.3 from Türk (2016)
-- `03_burgers_shock.py` — inviscid Burgers, sin initial condition
+- `02_singular_source_explicit.py` — Example 6.1.3 from Türk (2016), RK3
+- `03_singular_source_implicit.py` — same problem, RK3 + Crank–Nicolson
 
 ## Validation
 
@@ -76,8 +74,8 @@ If you use `weno_singular` in your research, please cite:
 ```bibtex
 @software{turk_weno_singular,
   author  = {Türk, İrfan},
-  title   = {{weno\_singular}: WENO solvers for hyperbolic conservation laws
-             with singular source terms},
+  title   = {{weno\_singular}: WENO solvers for linear hyperbolic
+             conservation laws with singular source terms},
   year    = {2026},
   url     = {https://github.com/irfanturk/weno_singular},
 }

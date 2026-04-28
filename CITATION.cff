@@ -3,9 +3,11 @@ message: "If you use this software, please cite it as below."
 type: software
 title: "weno_singular"
 abstract: >-
-  WENO solvers for hyperbolic conservation laws with singular source terms.
-  Modular Python implementations of WENO3 and WENO5 schemes on uniform meshes,
-  with explicit and semi-implicit time integration.
+  WENO solvers for linear hyperbolic conservation laws with singular source
+  terms. Specialized Python implementations of WENO3 and WENO5 finite-volume
+  schemes for 1D linear scalar advection on uniform meshes, with explicit
+  (SSP-RK3) and semi-implicit (RK3 + Crank-Nicolson) time integration, and
+  built-in support for Dirac-delta point sources.
 authors:
   - family-names: "Türk"
     given-names: "İrfan"
