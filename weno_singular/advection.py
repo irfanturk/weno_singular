@@ -134,7 +134,7 @@ def solve_advection_singular(
     x_left: float = 0.0,
     x_right: float = 1.0,
     xi: float = 1.0 / 3.0,
-    source_fn: Callable[[float], float] = lambda t: np.sin(np.pi * t),
+    source_fn: Callable[[float], float] | None = lambda t: np.sin(np.pi * t),
     initial_fn: Callable[[NDArray[np.float64], float], NDArray[np.float64]] | None = None,
     track_max_error: bool = True,
 ) -> dict:
@@ -152,10 +152,12 @@ def solve_advection_singular(
     x_left, x_right : float
         Domain endpoints.  Periodic boundary conditions are imposed.
     xi : float
-        Location of the Dirac source.
-    source_fn : callable, optional
+        Location of the Dirac source.  Ignored when ``source_fn`` is ``None``.
+    source_fn : callable or None, optional
         Time-dependent amplitude :math:`g(t)`.  Defaults to
         :math:`\sin(\pi t)`, matching Türk (2016, Example 6.1.3).
+        Pass ``None`` to disable the source term and solve the
+        homogeneous advection equation :math:`u_t + u_x = 0`.
     initial_fn : callable, optional
         Function ``(x, h) -> u_avg`` returning the cell averages of the
         initial condition.  Defaults to zero (the canonical test case).
@@ -173,7 +175,7 @@ def solve_advection_singular(
         - ``x`` : cell centers
         - ``h`` : mesh spacing
         - ``dt`` : time step
-        - ``delta_idx`` : index of the delta cell
+        - ``delta_idx`` : index of the delta cell (``None`` if no source)
         - ``T_final``, ``xi`` : echoes of input
         - ``max_err_inf`` : running max :math:`L_\infty` cell-average
           error if applicable, else ``None``
@@ -185,7 +187,8 @@ def solve_advection_singular(
     h = (x_right - x_left) / n
     dt = T_final / (N - 1)
     x = np.linspace(x_left + h / 2, x_right - h / 2, n)
-    delta_idx = find_delta_cell(xi, x_left, M)
+    has_source = source_fn is not None
+    delta_idx = find_delta_cell(xi, x_left, M) if has_source else None
 
     # Initial condition (default: zero)
     if initial_fn is None:
@@ -195,11 +198,16 @@ def solve_advection_singular(
         u = initial_fn(x, h)
         canonical = False
 
-    # Time-dependent RHS = WENO advection + delta source
-    def rhs(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
-        Lu, _, _ = L_advection(state, h)
-        Lu[delta_idx] += source_fn(t_eval) / h
-        return Lu
+    # Time-dependent RHS = WENO advection + (optional) delta source
+    if has_source:
+        def rhs(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
+            Lu, _, _ = L_advection(state, h)
+            Lu[delta_idx] += source_fn(t_eval) / h
+            return Lu
+    else:
+        def rhs(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
+            Lu, _, _ = L_advection(state, h)
+            return Lu
 
     # Time loop
     track = track_max_error and canonical
@@ -251,7 +259,7 @@ def solve_advection_singular_CR(
     x_left: float = 0.0,
     x_right: float = 1.0,
     xi: float = 1.0 / 3.0,
-    source_fn: Callable[[float], float] = lambda t: np.sin(np.pi * t),
+    source_fn: Callable[[float], float] | None = lambda t: np.sin(np.pi * t),
     initial_fn: Callable[[NDArray[np.float64], float], NDArray[np.float64]] | None = None,
     track_max_error: bool = True,
 ) -> dict:
@@ -282,7 +290,8 @@ def solve_advection_singular_CR(
     h = (x_right - x_left) / n
     dt = T_final / (N - 1)
     x = np.linspace(x_left + h / 2, x_right - h / 2, n)
-    delta_idx = find_delta_cell(xi, x_left, M)
+    has_source = source_fn is not None
+    delta_idx = find_delta_cell(xi, x_left, M) if has_source else None
 
     if initial_fn is None:
         u = np.zeros(n)
@@ -291,10 +300,15 @@ def solve_advection_singular_CR(
         u = initial_fn(x, h)
         canonical = False
 
-    def rhs_predictor(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
-        Lu, _, _ = L_advection(state, h)
-        Lu[delta_idx] += source_fn(t_eval) / h
-        return Lu
+    if has_source:
+        def rhs_predictor(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
+            Lu, _, _ = L_advection(state, h)
+            Lu[delta_idx] += source_fn(t_eval) / h
+            return Lu
+    else:
+        def rhs_predictor(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
+            Lu, _, _ = L_advection(state, h)
+            return Lu
 
     track = track_max_error and canonical
     max_err_inf = 0.0 if track else None
@@ -317,10 +331,14 @@ def solve_advection_singular_CR(
         L_new = build_matrix(omega_pred, h)
 
         # Source vectors at t^n and t^{n+1}, supported only at delta cell.
-        src_old = np.zeros(n)
-        src_new = np.zeros(n)
-        src_old[delta_idx] = source_fn(t_n) / h
-        src_new[delta_idx] = source_fn(t_n + dt) / h
+        if has_source:
+            src_old = np.zeros(n)
+            src_new = np.zeros(n)
+            src_old[delta_idx] = source_fn(t_n) / h
+            src_new[delta_idx] = source_fn(t_n + dt) / h
+        else:
+            src_old = None
+            src_new = None
 
         u = crank_nicolson_corrector(u, dt, L_old, L_new, src_old, src_new)
 
