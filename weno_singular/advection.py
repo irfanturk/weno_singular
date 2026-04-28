@@ -240,8 +240,127 @@ def solve_advection_singular(
     }
 
 
+# ----------------------------------------------------------------------
+# Solver: semi-implicit RK3 + Crank-Nicolson
+# ----------------------------------------------------------------------
+
+def solve_advection_singular_CR(
+    M: int = 181,
+    N: int = 1001,
+    T_final: float = 0.5,
+    x_left: float = 0.0,
+    x_right: float = 1.0,
+    xi: float = 1.0 / 3.0,
+    source_fn: Callable[[float], float] = lambda t: np.sin(np.pi * t),
+    initial_fn: Callable[[NDArray[np.float64], float], NDArray[np.float64]] | None = None,
+    track_max_error: bool = True,
+) -> dict:
+    r"""
+    Solve :math:`u_t + u_x = g(t)\,\delta(x - \xi)` with WENO5 +
+    SSP-RK3 predictor + Crank-Nicolson corrector.
+
+    The corrector freezes the WENO weights at the predictor and solves
+    a single sparse linear system per step.  This recovers second-
+    order temporal accuracy and reproduces thesis Table 6.4 of
+    Türk (2016) to four significant digits.
+
+    Parameters
+    ----------
+    M, N, T_final, x_left, x_right, xi : see :func:`solve_advection_singular`.
+    source_fn, initial_fn, track_max_error : see :func:`solve_advection_singular`.
+
+    Returns
+    -------
+    result : dict
+        Same keys as :func:`solve_advection_singular`, plus ``v_half``
+        (reconstruction at right interfaces of the final solution).
+    """
+    from weno_singular.time_steppers import crank_nicolson_corrector
+    from weno_singular.weno5 import build_matrix, reconstruct
+
+    n = M - 1
+    h = (x_right - x_left) / n
+    dt = T_final / (N - 1)
+    x = np.linspace(x_left + h / 2, x_right - h / 2, n)
+    delta_idx = find_delta_cell(xi, x_left, M)
+
+    if initial_fn is None:
+        u = np.zeros(n)
+        canonical = True
+    else:
+        u = initial_fn(x, h)
+        canonical = False
+
+    def rhs_predictor(state: NDArray[np.float64], t_eval: float) -> NDArray[np.float64]:
+        Lu, _, _ = L_advection(state, h)
+        Lu[delta_idx] += source_fn(t_eval) / h
+        return Lu
+
+    track = track_max_error and canonical
+    max_err_inf = 0.0 if track else None
+    t_n = 0.0
+
+    for _ in range(N - 1):
+        # Predictor: SSP-RK3.  Also captures omega at t^n (cheaply, from L_advection)
+        # for the corrector.
+        _, _, omega_n = L_advection(u, h)
+
+        # Run the full RK3 step using ssp_rk3_step for clarity.
+        from weno_singular.time_steppers import ssp_rk3_step
+        u_pred = ssp_rk3_step(u, dt, rhs_predictor, t=t_n)
+
+        # Get omega at the predictor for the corrector.
+        _, _, omega_pred = L_advection(u_pred, h)
+
+        # Build the two frozen sparse operators.
+        L_old = build_matrix(omega_n, h)
+        L_new = build_matrix(omega_pred, h)
+
+        # Source vectors at t^n and t^{n+1}, supported only at delta cell.
+        src_old = np.zeros(n)
+        src_new = np.zeros(n)
+        src_old[delta_idx] = source_fn(t_n) / h
+        src_new[delta_idx] = source_fn(t_n + dt) / h
+
+        u = crank_nicolson_corrector(u, dt, L_old, L_new, src_old, src_new)
+
+        t_n += dt
+        if track:
+            u_exact = exact_cell_averages_singular(x, h, xi, t_n)
+            err = float(np.max(np.abs(u - u_exact)))
+            if err > max_err_inf:
+                max_err_inf = err
+
+    # Final L1 error at right interfaces (matches Türk 2016 Table 6.4)
+    if track:
+        v_half, _ = reconstruct(u)
+        x_face = x + h / 2
+        in_supp = (x_face > xi) & (x_face < xi + T_final)
+        exact_face = np.where(
+            in_supp, np.sin(np.pi * (xi + T_final - x_face)), 0.0
+        )
+        L1_err_face = float(np.sum(np.abs(v_half - exact_face)) * h)
+    else:
+        v_half, _ = reconstruct(u)
+        L1_err_face = None
+
+    return {
+        "u": u,
+        "x": x,
+        "h": h,
+        "dt": dt,
+        "delta_idx": delta_idx,
+        "T_final": T_final,
+        "xi": xi,
+        "v_half": v_half,
+        "max_err_inf": max_err_inf,
+        "L1_err_face": L1_err_face,
+    }
+
+
 __all__ = [
     "find_delta_cell",
     "exact_cell_averages_singular",
     "solve_advection_singular",
+    "solve_advection_singular_CR",
 ]

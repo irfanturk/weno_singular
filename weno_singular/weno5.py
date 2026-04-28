@@ -198,6 +198,65 @@ def L_advection(
     return Lu, v_half, omega
 
 
+# ----------------------------------------------------------------------
+# Sparse matrix form of the WENO5 spatial operator (frozen weights)
+# ----------------------------------------------------------------------
+
+def build_matrix(omega: NDArray[np.float64], h: float):
+    r"""
+    Assemble the sparse periodic banded matrix :math:`L` such that
+    :math:`L\,u` approximates :math:`-\partial_x u` using WENO5 with
+    the supplied (frozen) nonlinear weights.
+
+    Each row has six nonzero entries at columns
+    :math:`i-3, i-2, i-1, i, i+1, i+2` (mod ``n``).  This linear-
+    operator form is the building block of the semi-implicit
+    Crank-Nicolson corrector
+    (:func:`weno_singular.time_steppers.crank_nicolson_corrector`).
+
+    Parameters
+    ----------
+    omega : ndarray, shape (3, n)
+        Nonlinear weights at each cell, e.g.\ from a predictor stage.
+    h : float
+        Uniform mesh spacing.
+
+    Returns
+    -------
+    L : scipy.sparse.csr_matrix, shape (n, n)
+        Sparse periodic operator approximating :math:`-\partial_x`.
+    """
+    from scipy.sparse import csr_matrix
+
+    o0, o1, o2 = omega
+    n = o0.size
+
+    inv6h = 1.0 / (6.0 * h)
+    a1 = 1.0 * inv6h
+    a2 = 2.0 * inv6h
+    a5 = 5.0 * inv6h
+    a7 = 7.0 * inv6h
+    a11 = 11.0 * inv6h
+
+    o0_im1 = np.roll(o0, 1)
+    o1_im1 = np.roll(o1, 1)
+    o2_im1 = np.roll(o2, 1)
+
+    # Six diagonals (length n each, one entry per row i)
+    d_m3 = a2 * o0_im1
+    d_m2 = -a7 * o0_im1 - a1 * o1_im1 - a2 * o0
+    d_m1 = a11 * o0_im1 + a5 * o1_im1 + a2 * o2_im1 + a7 * o0 + a1 * o1
+    d_0 = a2 * o1_im1 + a5 * o2_im1 - a11 * o0 - a5 * o1 - a2 * o2
+    d_p1 = -a1 * o2_im1 - a2 * o1 - a5 * o2
+    d_p2 = a1 * o2
+
+    i_arr = np.arange(n)
+    rows = np.tile(i_arr[:, None], (1, 6)).ravel()
+    cols = ((i_arr[:, None] + np.array([-3, -2, -1, 0, 1, 2])) % n).ravel()
+    data = np.column_stack([d_m3, d_m2, d_m1, d_0, d_p1, d_p2]).ravel()
+    return csr_matrix((data, (rows, cols)), shape=(n, n))
+
+
 __all__ = [
     "GAMMA",
     "EPS",
@@ -205,4 +264,5 @@ __all__ = [
     "nonlinear_weights",
     "reconstruct",
     "L_advection",
+    "build_matrix",
 ]
