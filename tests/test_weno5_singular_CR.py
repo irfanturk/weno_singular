@@ -18,7 +18,6 @@ from weno_singular.advection import (
     solve_advection_singular_CR,
 )
 
-
 #: Thesis Table 6.4 (Türk 2016), values to two significant figures.
 _THESIS_TABLE_6_4: dict[int, float] = {
     21: 3.54e-2,
