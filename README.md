@@ -1,5 +1,8 @@
 # weno_singular
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19865330.svg)](https://doi.org/10.5281/zenodo.19865330)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 **WENO solvers for linear hyperbolic conservation laws with singular source terms.**
 
 A specialized Python implementation of WENO3 and WENO5 finite-volume
@@ -73,11 +76,14 @@ If you use `weno_singular` in your research, please cite:
 
 ```bibtex
 @software{turk_weno_singular,
-  author  = {Türk, İrfan},
-  title   = {{weno\_singular}: WENO solvers for linear hyperbolic
-             conservation laws with singular source terms},
-  year    = {2026},
-  url     = {https://github.com/irfanturk/weno_singular},
+  author    = {Türk, İrfan},
+  title     = {{weno\_singular}: WENO solvers for linear hyperbolic
+               conservation laws with singular source terms},
+  year      = {2026},
+  version   = {0.1.0},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.19865330},
+  url       = {https://doi.org/10.5281/zenodo.19865330},
 }
 ```
 

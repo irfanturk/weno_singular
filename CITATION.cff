@@ -15,6 +15,10 @@ version: 0.1.0
 date-released: "2026-04-28"
 license: Apache-2.0
 repository-code: "https://github.com/irfanturk/weno_singular"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.19865330
+    description: "Zenodo archive of v0.1.0"
 keywords:
   - WENO
   - hyperbolic conservation laws
