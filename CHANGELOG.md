@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.2.0] — 2026-07-14
 
-Zenodo version DOI: _(assigned when the GitHub release is published)_
+Zenodo version DOI: [10.5281/zenodo.21364566](https://doi.org/10.5281/zenodo.21364566)
 
 Bug-fix and feature release.  Two of the fixes below change numerical
 output, so this is a minor rather than a patch release; users comparing
