@@ -9,7 +9,7 @@ A Python implementation of finite-volume WENO schemes for the 1D linear
 advection equation on uniform periodic meshes, with first-class support
 for Dirac-delta point sources:
 
-$$u_t + u_x = g(t)\,\delta(x - \xi), \qquad u(x,0) = \varphi(x).$$
+$$u_t + u_x = g(t)\delta(x - \xi), \qquad u(x,0) = \varphi(x).$$
 
 Such problems arise wherever a conservation law is forced at a point — a
 well in a flow, a point release of a contaminant, a localized reaction
@@ -80,9 +80,9 @@ Türk (2016) counts cells; the tables below give both.
 | `L1_err_face` | over the reconstruction at right interfaces, eq. (6.1.19) of Türk (2016) | to compare against the published tables |
 
 > **Caveat.** When $\xi$ coincides with a cell interface, `L1_err_face`
-> is *ill posed*: the analytical solution is right-continuous at $\xi$
-> (value $g(t)$) while an upwind reconstruction at that face necessarily
-> returns the left limit (value $0$). Both are correct from their own
+> is *ill posed*: the analytical solution is right-continuous at $\xi$,
+> with value $g(t)$, while an upwind reconstruction at that face necessarily
+> returns the left limit, $0$. Both are correct from their own
 > side, and the resulting $O(1)$ discrepancy at a single face injects a
 > spurious $O(h)$ term into the norm. Prefer `L1_err_cell` on such meshes.
 
