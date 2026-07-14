@@ -35,8 +35,12 @@ from numpy.typing import NDArray
 #: Linear (optimal) weights for the three substencils, summing to 1.
 GAMMA: NDArray[np.float64] = np.array([1.0 / 10.0, 3.0 / 5.0, 3.0 / 10.0])
 
-#: Tiny constant in the nonlinear weights to avoid division by zero.
+#: Tiny constant in the WENO5-JS nonlinear weights to avoid division by zero.
 EPS: float = 1e-6
+
+#: Regularization constant for the WENO-Z weights (Borges et al., 2008).
+#: Much smaller than ``EPS``: the WENO-Z weights are insensitive to it.
+EPS_Z: float = 1e-40
 
 
 # ----------------------------------------------------------------------
@@ -111,12 +115,79 @@ def nonlinear_weights(
 # WENO5 reconstruction at cell interfaces x_{i+1/2}
 # ----------------------------------------------------------------------
 
+def nonlinear_weights_z(
+    beta: NDArray[np.float64],
+    gamma: NDArray[np.float64] = GAMMA,
+    eps: float = EPS_Z,
+    p: int = 2,
+) -> NDArray[np.float64]:
+    r"""
+    WENO-Z nonlinear weights (Borges et al., 2008).
+
+    A global smoothness indicator :math:`\tau_5 = |\beta_0 - \beta_2|`
+    is used to rescale the Jiang-Shu weights:
+
+    .. math::
+        \alpha_r = \gamma_r
+                   \left[1 + \left(\frac{\tau_5}{\beta_r + \varepsilon}\right)^{p}\right],
+        \qquad \omega_r = \alpha_r \big/ \sum_s \alpha_s .
+
+    On smooth data :math:`\tau_5 = O(h^5)`, so :math:`\omega_r \to \gamma_r`
+    much faster than for WENO5-JS; the scheme therefore suffers less
+    accuracy loss at critical points.  Near a discontinuity the
+    behaviour reverts to that of a standard WENO reconstruction.
+
+    Parameters
+    ----------
+    beta : ndarray, shape (3, n)
+        Jiang-Shu smoothness indicators.
+    gamma : ndarray, shape (3,), optional
+        Linear weights.  Defaults to ``GAMMA``.
+    eps : float, optional
+        Regularization constant.  Defaults to ``EPS_Z`` (1e-40), which
+        is the value recommended by Borges et al.; unlike WENO5-JS, the
+        WENO-Z weights are not sensitive to this parameter.
+    p : int, optional
+        Power in the rescaling.  ``p = 2`` (default) is the standard
+        choice for fifth-order WENO-Z.
+
+    Returns
+    -------
+    omega : ndarray, shape (3, n)
+        Nonlinear weights, columns sum to 1.
+
+    References
+    ----------
+    Borges, R., Carmona, M., Costa, B., and Don, W. S. (2008),
+        "An improved weighted essentially non-oscillatory scheme for
+        hyperbolic conservation laws",
+        J. Comput. Phys., 227(6), 3191-3211.
+    """
+    tau5 = np.abs(beta[0] - beta[2])
+    alpha = gamma[:, None] * (1.0 + (tau5[None, :] / (beta + eps)) ** p)
+    return alpha / alpha.sum(axis=0, keepdims=True)
+
+
+#: Registry of available nonlinear-weight functions, keyed by scheme name.
+WEIGHT_FUNCTIONS: dict[str, Callable[..., NDArray[np.float64]]] = {
+    "js": nonlinear_weights,
+    "z": nonlinear_weights_z,
+}
+
+
 def reconstruct(
     u: NDArray[np.float64],
     indicator_fn: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = None,
+    weight_fn: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = None,
+    variant: str = "js",
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     r"""
-    Reconstruct ``u`` at cell interfaces :math:`x_{i+1/2}` using WENO5-JS.
+    Reconstruct ``u`` at cell interfaces :math:`x_{i+1/2}` using WENO5.
+
+    The candidate stencil polynomials are those of Jiang & Shu (1996);
+    the ``variant`` argument selects how the nonlinear weights are
+    formed from the smoothness indicators (``"js"`` for Jiang-Shu,
+    ``"z"`` for WENO-Z).
 
     The reconstruction is upwind-biased (it assumes the wave propagates
     in the positive ``x`` direction, i.e.\ the characteristic speed
@@ -129,6 +200,12 @@ def reconstruct(
     indicator_fn : callable, optional
         Function ``u -> beta`` returning a ``(3, n)`` array of smoothness
         indicators.  Defaults to :func:`smoothness_indicators`.
+    weight_fn : callable, optional
+        Function ``beta -> omega`` returning a ``(3, n)`` array of
+        nonlinear weights.  Overrides ``variant`` when given.
+    variant : {"js", "z"}, optional
+        Selects the nonlinear-weight formula: ``"js"`` (default) for
+        Jiang-Shu, ``"z"`` for WENO-Z (Borges et al., 2008).
 
     Returns
     -------
@@ -139,6 +216,14 @@ def reconstruct(
     """
     if indicator_fn is None:
         indicator_fn = smoothness_indicators
+    if weight_fn is None:
+        try:
+            weight_fn = WEIGHT_FUNCTIONS[variant]
+        except KeyError:
+            raise ValueError(
+                f"unknown WENO5 variant {variant!r}; "
+                f"expected one of {sorted(WEIGHT_FUNCTIONS)}"
+            ) from None
 
     um2 = np.roll(u, 2)
     um1 = np.roll(u, 1)
@@ -152,7 +237,7 @@ def reconstruct(
     v2 = (1.0 / 3.0) * u0 + (5.0 / 6.0) * up1 + (-1.0 / 6.0) * up2
 
     beta = indicator_fn(u)
-    omega = nonlinear_weights(beta)
+    omega = weight_fn(beta)
 
     v_half = omega[0] * v0 + omega[1] * v1 + omega[2] * v2
     return v_half, omega
@@ -163,7 +248,7 @@ def reconstruct(
 # ----------------------------------------------------------------------
 
 def L_advection(
-    u: NDArray[np.float64], h: float
+    u: NDArray[np.float64], h: float, variant: str = "js"
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     r"""
     Compute the semi-discrete spatial operator for :math:`u_t + u_x = 0`.
@@ -192,7 +277,7 @@ def L_advection(
     omega : ndarray, shape (3, n)
         Nonlinear WENO weights (returned for diagnostics).
     """
-    v_half, omega = reconstruct(u)
+    v_half, omega = reconstruct(u, variant=variant)
     # F_{i-1/2} is v_half rolled right by one (periodic).
     Lu = -(v_half - np.roll(v_half, 1)) / h
     return Lu, v_half, omega
@@ -260,8 +345,11 @@ def build_matrix(omega: NDArray[np.float64], h: float):
 __all__ = [
     "GAMMA",
     "EPS",
+    "EPS_Z",
+    "WEIGHT_FUNCTIONS",
     "smoothness_indicators",
     "nonlinear_weights",
+    "nonlinear_weights_z",
     "reconstruct",
     "L_advection",
     "build_matrix",
