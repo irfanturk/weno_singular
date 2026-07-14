@@ -4,28 +4,62 @@ type: software
 title: "weno_singular"
 abstract: >-
   WENO solvers for linear hyperbolic conservation laws with singular source
-  terms. Specialized Python implementations of WENO3 and WENO5 finite-volume
-  schemes for 1D linear scalar advection on uniform meshes, with explicit
-  (SSP-RK3) and semi-implicit (RK3 + Crank-Nicolson) time integration, and
-  built-in support for Dirac-delta point sources.
+  terms. Python implementations of the WENO3, WENO5 (Jiang-Shu) and WENO-Z
+  (Borges et al.) finite-volume reconstructions for 1D linear scalar advection
+  on uniform meshes, with explicit (SSP-RK3) and semi-implicit
+  (RK3 + Crank-Nicolson) time integration, built-in support for Dirac-delta
+  point sources, and explicit control over source placement when the
+  singularity coincides with a cell interface.
 authors:
   - family-names: "Türk"
     given-names: "İrfan"
-version: 0.1.0
-date-released: "2026-04-28"
+version: 0.2.0
+date-released: "2026-07-14"
 license: Apache-2.0
 repository-code: "https://github.com/irfanturk/weno_singular"
+doi: 10.5281/zenodo.19865329
 identifiers:
+  - type: doi
+    value: 10.5281/zenodo.19865329
+    description: "Zenodo concept DOI (always resolves to the latest release)"
   - type: doi
     value: 10.5281/zenodo.19865330
     description: "Zenodo archive of v0.1.0"
 keywords:
   - WENO
+  - WENO-Z
   - hyperbolic conservation laws
   - singular source terms
+  - Dirac delta
   - finite volume
   - Python
 references:
+  - type: article
+    authors:
+      - family-names: "Türk"
+        given-names: "İrfan"
+      - family-names: "Ashyraliyev"
+        given-names: "Maksat"
+    title: "On the numerical solution of hyperbolic equations with singular source terms"
+    journal: "AIP Conference Proceedings"
+    volume: 1611
+    start: 374
+    end: 379
+    year: 2014
+    doi: 10.1063/1.4893863
+  - type: article
+    authors:
+      - family-names: "Türk"
+        given-names: "İrfan"
+      - family-names: "Ashyraliyev"
+        given-names: "Maksat"
+    title: "On the numerical solution of diffusion problem with singular source terms"
+    journal: "AIP Conference Proceedings"
+    volume: 1470
+    start: 176
+    end: 178
+    year: 2012
+    doi: 10.1063/1.4747668
   - type: thesis
     authors:
       - family-names: "Türk"
@@ -33,5 +67,38 @@ references:
     title: "On the numerical solution of advection diffusion reaction equations with singular source terms"
     institution:
       name: "İstanbul University"
+    thesis-type: "PhD thesis"
     year: 2016
     url: "https://tez.yok.gov.tr/UlusalTezMerkezi/tezDetay.jsp?id=RnfPVSw2_JaJGF7XtiaayQ"
+  - type: article
+    authors:
+      - family-names: "Borges"
+        given-names: "Rafael"
+      - family-names: "Carmona"
+        given-names: "Monique"
+      - family-names: "Costa"
+        given-names: "Bruno"
+      - family-names: "Don"
+        given-names: "Wai Sun"
+    title: "An improved weighted essentially non-oscillatory scheme for hyperbolic conservation laws"
+    journal: "Journal of Computational Physics"
+    volume: 227
+    issue: 6
+    start: 3191
+    end: 3211
+    year: 2008
+    doi: 10.1016/j.jcp.2007.11.038
+  - type: article
+    authors:
+      - family-names: "Jiang"
+        given-names: "Guang-Shan"
+      - family-names: "Shu"
+        given-names: "Chi-Wang"
+    title: "Efficient implementation of weighted ENO schemes"
+    journal: "Journal of Computational Physics"
+    volume: 126
+    issue: 1
+    start: 202
+    end: 228
+    year: 1996
+    doi: 10.1006/jcph.1996.0130
