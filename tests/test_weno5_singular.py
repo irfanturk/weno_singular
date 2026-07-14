@@ -21,24 +21,39 @@ from weno_singular.advection import (
 # Mesh / index helpers
 # ----------------------------------------------------------------------
 
-def test_find_delta_cell_basic() -> None:
-    """For xi = 1/3 on [0, 1] with M = 7 (i.e. 6 cells of width 1/6),
-    the cell containing xi is index 1 (the cell [1/6, 1/3])."""
-    j = find_delta_cell(xi=1.0 / 3.0, x_left=0.0, M=7)
-    assert j == 1
+def test_find_delta_cell_interior() -> None:
+    """
+    For xi = 0.3 on [0, 1] with M = 7 (6 cells of width 1/6), xi lies
+    strictly inside cell 1 = [1/6, 1/3], so both tie-breaking policies
+    must return 1.
+    """
+    for policy in ("downwind", "upwind"):
+        j = find_delta_cell(xi=0.3, x_left=0.0, M=7, on_interface=policy)
+        assert j == 1
 
 
-def test_find_delta_cell_endpoint() -> None:
+def test_find_delta_cell_on_interface() -> None:
     """
-    Verify the ceiling-based convention from Türk (2016): with
-    ``M`` interfaces (so ``M - 1`` cells of width ``(b - a)/(M - 1)``
-    over ``[a, b]``), the index is ``ceil((xi - a)*(M - 1)) - 1``.
+    For xi = 1/3 on [0, 1] with M = 7 (6 cells of width 1/6), xi = 2/6
+    falls exactly on the interface between cells 1 and 2.  The default
+    ``"downwind"`` policy selects cell 2 = [1/3, 1/2] -- the cell the
+    characteristics immediately fill, where the exact solution is
+    non-zero.  ``"upwind"`` reproduces the v0.1.0 choice, cell 1.
     """
-    # M = 5 interfaces => 4 cells of width 0.5 over [0, 2];
-    # interfaces at 0, 0.5, 1.0, 1.5, 2.0.
-    # xi = 1.0 -> ceil(1.0 * 4) - 1 = 4 - 1 = 3.
-    j = find_delta_cell(xi=1.0, x_left=0.0, M=5)
-    assert j == 3
+    assert find_delta_cell(xi=1.0 / 3.0, x_left=0.0, M=7) == 2
+    assert find_delta_cell(xi=1.0 / 3.0, x_left=0.0, M=7,
+                           on_interface="upwind") == 1
+
+
+def test_find_delta_cell_respects_domain_length() -> None:
+    """
+    Regression test for a v0.1.0 bug: the index was computed as
+    ``ceil((xi - a) * (M - 1)) - 1``, which silently assumes a domain of
+    length 1.  On [0, 2] with M = 5 (4 cells of width 0.5) and xi = 1.0
+    that returned cell 3 = [1.5, 2.0] -- not even adjacent to xi.
+    """
+    j = find_delta_cell(xi=1.0, x_left=0.0, M=5, x_right=2.0)
+    assert j == 2                       # cell [1.0, 1.5], downwind of xi
 
 
 # ----------------------------------------------------------------------
