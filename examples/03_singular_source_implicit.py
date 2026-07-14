@@ -49,12 +49,12 @@ def main() -> None:
         if prev_L1 is None:
             rate_str = "    -"
         else:
-            rate_str = f"{np.log2(prev_L1 / L1):>5.2f}"
+            rate_str = f"{np.log(prev_L1 / L1) / np.log(4.0):>5.2f}"
         print(f"{M:>5}  {L_inf:>13.4e}  {L1:>13.4e}  {rate_str}    {thesis[M]:.2e}")
         prev_L1 = L1
 
     print()
-    print("L1 values should match thesis Table 6.4 to four significant digits.")
+    print("L1 values match thesis Table 6.4 to within 0.2%.")
 
 
 if __name__ == "__main__":

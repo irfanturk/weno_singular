@@ -12,7 +12,8 @@ The exact solution is
     u(x, t) = sin(pi*(1/3 + t - x))    for  1/3 <= x <= 1/3 + t,
             = 0                        otherwise.
 
-The solution has a moving discontinuity at x = 1/3, so WENO5 can deliver
+The solution has a STATIONARY jump discontinuity at x = 1/3, so WENO5
+can deliver
 at best first-order convergence in L1 (Table 6.4 of the thesis).
 
 This example reproduces Table 6.4 to four significant digits using an
@@ -53,13 +54,13 @@ def main() -> None:
         if prev_L1 is None:
             rate_str = "    -"
         else:
-            rate_str = f"{np.log2(prev_L1 / L1):>5.2f}"
+            rate_str = f"{np.log(prev_L1 / L1) / np.log(4.0):>5.2f}"
         print(f"{M:>5}  {L_inf:>13.4e}  {L1:>13.4e}  {rate_str}    {thesis[M]:.2e}")
         prev_L1 = L1
 
     print()
     print("Each refinement (M -> 4 M) should reduce L1 by a factor close to 4")
-    print("(first-order convergence at the moving discontinuity).")
+    print("(first-order convergence at the stationary jump discontinuity).")
 
 
 if __name__ == "__main__":
