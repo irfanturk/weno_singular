@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > resolves to the latest release. Each release below also carries its own
 > version DOI.
 
+## [0.3.0] — 2026-07-17
+
+Zenodo version DOI: _(assigned when the GitHub release is published)_
+
+Feature release: nonlinear Burgers solver.
+
+### Added
+- **`weno_singular.burgers`**: WENO solver for the inviscid Burgers
+  equation with a singular source, `u_t + (u^2/2)_x = g(t) delta(x - xi)`.
+  Uses the shared WENO3/WENO5/WENO5-Z reconstructions with a local
+  Lax-Friedrichs (Rusanov) flux and a mirror-image right-biased
+  reconstruction for the sign-changing characteristic speed. The
+  `on_interface` injection policy carries over unchanged.
+- `burgers_self_convergence`: self-convergence study against a fine-mesh
+  reference (no closed-form solution once a shock forms).
+- `examples/06_burgers_alignment.py`: the injection-side study for the
+  nonlinear flux.
+- 10 new tests (66 total): mirror reconstruction, steady-state shock
+  height, machine-precision mass conservation for Burgers, high-order
+  convergence on smooth data, and the downwind advantage in the max norm.
+
+### Notes
+- Mass conservation of the direct injection holds to machine precision for
+  the nonlinear flux as well (verified: g*T to ~1e-14).
+- The injection-side effect persists for Burgers but is milder than for
+  linear advection, because the shock moves and alignment is not preserved.
+
 ## [0.2.0] — 2026-07-14
 
 Zenodo version DOI: [10.5281/zenodo.21364566](https://doi.org/10.5281/zenodo.21364566)
