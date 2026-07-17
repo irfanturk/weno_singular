@@ -146,7 +146,7 @@ Run the test suite with `pytest` (56 tests). Examples in [`examples/`](examples/
   title     = {{weno\_singular}: WENO solvers for linear hyperbolic
                conservation laws with singular source terms},
   year      = {2026},
-  version   = {0.2.0},
+  version   = {0.3.0},
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.19865329},
   url       = {https://doi.org/10.5281/zenodo.19865329},
