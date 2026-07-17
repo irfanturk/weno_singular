@@ -8,9 +8,10 @@ Top-level modules
 - ``weno_singular.weno3``         : WENO3 reconstruction on uniform mesh
 - ``weno_singular.time_steppers`` : SSP-RK3 and Crank-Nicolson integrators
 - ``weno_singular.advection``     : solver for u_t + u_x = source terms
+- ``weno_singular.burgers``       : solver for u_t + (u^2/2)_x = source terms
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "__version__",
