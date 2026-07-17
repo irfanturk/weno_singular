@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "weno-singular"
-version     = "0.2.0"
+version     = "0.3.0"
 description = "WENO solvers for linear hyperbolic conservation laws with singular source terms"
 readme      = "README.md"
 requires-python = ">=3.9"
