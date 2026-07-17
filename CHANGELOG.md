@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.3.0] — 2026-07-17
 
-Zenodo version DOI: _(assigned when the GitHub release is published)_
+Zenodo version DOI: [10.5281/zenodo.21409013](https://doi.org/10.5281/zenodo.21409013)
 
 Feature release: nonlinear Burgers solver.
 
